@@ -1,8 +1,10 @@
 'use client';
 
-import React from 'react';
-import { Box, Typography } from '@mui/material';
+import React, { useRef, useState } from 'react';
+import { Box, Typography, IconButton } from '@mui/material';
 import Image from 'next/image';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import PauseIcon from '@mui/icons-material/Pause';
 import { DailyTopicItem } from './types';
 
 interface Props {
@@ -10,6 +12,31 @@ interface Props {
 }
 
 const DailyTopicCard: React.FC<Props> = ({ item }) => {
+  const isVideo = item.node_type === 'video';
+  const videoRef = useRef<HTMLIFrameElement>(null);
+  const [isPlaying, setIsPlaying] = useState(true);
+
+  const getYouTubeEmbedUrl = (url: string, autoplay = true) => {
+    const videoId = url.split('v=')[1]?.split('&')[0];
+    return `https://www.youtube.com/embed/${videoId}?autoplay=${autoplay ? 1 : 0}&mute=1&enablejsapi=1`;
+  };
+
+  const handleTogglePlay = (e: React.MouseEvent) => {
+    e.preventDefault(); // prevent link navigation
+    const iframe = videoRef.current?.contentWindow;
+    if (!iframe) return;
+
+    iframe.postMessage(
+      JSON.stringify({
+        event: 'command',
+        func: isPlaying ? 'pauseVideo' : 'playVideo',
+        args: [],
+      }),
+      '*'
+    );
+    setIsPlaying((prev) => !prev);
+  };
+
   return (
     <Box display="flex" gap={2} height="100px" sx={{ borderRadius: 2 }}>
       <a
@@ -28,17 +55,51 @@ const DailyTopicCard: React.FC<Props> = ({ item }) => {
           borderRadius="6px"
           overflow="hidden"
         >
-          <Image
-            src={item.image_url}
-            alt={item.title}
-            fill
-            style={{ objectFit: 'cover', borderRadius: '6px' }}
-          />
+          {isVideo ? (
+            <>
+              <iframe
+                ref={videoRef}
+                src={getYouTubeEmbedUrl(item.image_url)}
+                title="YouTube video"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  border: 0,
+                  borderRadius: '6px',
+                }}
+              />
+              <IconButton
+                onClick={handleTogglePlay}
+                sx={{
+                  position: 'absolute',
+                  top: 4,
+                  right: 4,
+                  backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                  color: '#fff',
+                  zIndex: 10,
+                  '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.8)' },
+                }}
+              >
+                {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
+              </IconButton>
+            </>
+          ) : (
+            <Image
+              src={item.image_url}
+              alt={item.title || 'daily topic image'}
+              fill
+              style={{ objectFit: 'cover', borderRadius: '6px' }}
+            />
+          )}
         </Box>
+
         <Box sx={{ flexGrow: 1, ml: 2 }}>
           <Typography variant="caption" color="error.main" fontWeight={500}>
             {item.category || item.node_type}
           </Typography>
+
           <Typography
             variant="body2"
             fontWeight={600}
@@ -60,6 +121,7 @@ const DailyTopicCard: React.FC<Props> = ({ item }) => {
           >
             {item.title}
           </Typography>
+
           {item.node_type === 'event' && item.event_start && (
             <Typography variant="caption" color="primary.main" mt={0.5} fontSize="12px">
               {new Date(item.event_start).toLocaleDateString(undefined, {
