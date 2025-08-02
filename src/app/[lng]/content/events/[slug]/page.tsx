@@ -55,26 +55,26 @@ interface EventData {
 export default function EventPage() {
 
   const mapBannerImages = (images: BannerImage[]) =>
-  images.map((img) => ({
-    id: img.id,
-    image: img.image_url,
-    title: '',
-    subtitle: '',
-    cta: '',
-    href: img.link || '#',
-    duration: img.duration,
-  }));
+    images.map((img) => ({
+      id: img.id,
+      image: img.image_url,
+      title: '',
+      subtitle: '',
+      cta: '',
+      href: img.link || '#',
+      duration: img.duration,
+    }));
 
 
   const params = useParams();
-const slugArray = params?.slug as string | undefined;
-const slug = decodeURIComponent(slugArray ?? "");
+  const slugArray = params?.slug as string | undefined;
+  const slug = decodeURIComponent(slugArray ?? "");
 
   const [eventDialogueOpen, setEventDialogueOpen] = useState(false);
-const [event, setEvent] = useState<EventData | null>(null);
+  const [event, setEvent] = useState<EventData | null>(null);
   const [loading, setLoading] = useState(true);
-const [sideBanner, setSideBanner] = useState<{ images: BannerImage[] } | null>(null);
-const [heroBanner, setHeroBanner] = useState<{ images: BannerImage[] } | null>(null);
+  const [sideBanner, setSideBanner] = useState<{ images: BannerImage[] } | null>(null);
+  const [heroBanner, setHeroBanner] = useState<{ images: BannerImage[] } | null>(null);
 
   useEffect(() => {
     if (!slug) return;
@@ -158,7 +158,7 @@ const [heroBanner, setHeroBanner] = useState<{ images: BannerImage[] } | null>(n
 
         <Box sx={{ mx: "auto", py: 2 }}>
           <Grid container alignItems="stretch">
-            <Grid item xs={8} sx={{paddingRight:"10px"}}>
+            <Grid item xs={8} sx={{ paddingRight: "10px" }}>
               <EventDetail
                 title={event.eventTitle}
                 imageUrl={event.coverImage}
@@ -166,10 +166,11 @@ const [heroBanner, setHeroBanner] = useState<{ images: BannerImage[] } | null>(n
                 content={event.eventDescription}
                 dateRange={event.eventSchedule}
                 timeRange={event.eventSchedule?.timeSlots}
+                slug={slug}
               />
               <CommentBox />
             </Grid>
-            <Grid item xs={4}  sx={{paddingLeft:"10px"}}>
+            <Grid item xs={4} sx={{ paddingLeft: "10px" }}>
               {/* <MoreArticles moreArticles={dailyData || []} loading={false} /> */}
               <SideBanner event={event} openDialogueBox={setEventDialogueOpen} />
               {!sideBanner?.images?.length ? (
@@ -193,7 +194,7 @@ const [heroBanner, setHeroBanner] = useState<{ images: BannerImage[] } | null>(n
         </Box>
       </Box>
 
-      <EventReminderDialog  event={event} open={eventDialogueOpen} onClose={() => setEventDialogueOpen(false)}/>
+      <EventReminderDialog event={event} open={eventDialogueOpen} onClose={() => setEventDialogueOpen(false)} />
     </BaseLayout>
   );
 }

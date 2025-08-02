@@ -14,6 +14,13 @@ import EmptyState from "@/components/empty-box";
 import Breadcrumbs from "@/components/breadcrumbs";
 import { useParams } from "next/navigation";
 import SideBannerCarousel from "@/components/banner/SideBanner";
+import FaceBookIcon from "@/icons/socialMedia/facebook";
+import WhatsAppIcon from "@/icons/socialMedia/whatsapp";
+import TwitterIcon from "@/icons/socialMedia/twitter";
+import LinkedInIcon from "@/icons/socialMedia/linkedin";
+import CopyIcon from "@/icons/socialMedia/copyIcon";
+import InstagramIcon from "@/icons/socialMedia/instagram";
+import TikTokIcon from "@/icons/socialMedia/tiktok";
 
 const Submenu = dynamic(() => import("@/components/header/submenu"));
 
@@ -143,6 +150,7 @@ export default function PostPage() {
                 author={post.authorName}
                 publishDate={post.publishedDate}
                 content={post.content}
+                slug={slug}
               />
               <CommentBox nid={post.id} />
             </Grid>

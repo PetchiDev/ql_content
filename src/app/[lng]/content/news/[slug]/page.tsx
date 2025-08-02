@@ -103,6 +103,7 @@ export default function PostPage() {
                                 author={post.authorName}
                                 publishDate={post.publishedDate}
                                 content={post.content}
+                                slug={post.slug}
                             />
                             <CommentBox nid={postId} />
                         </Grid>

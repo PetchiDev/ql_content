@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
     Box,
     Typography,
@@ -9,6 +9,9 @@ import {
     Stack,
     Avatar,
     IconButton,
+    CircularProgress,
+    Snackbar,
+    Alert,
 } from '@mui/material';
 import ThumbUpAltOutlinedIcon from '@mui/icons-material/ThumbUpAltOutlined';
 import { jwtDecode } from 'jwt-decode';
@@ -38,6 +41,15 @@ interface Comment {
     dislikeCount: number;
 }
 
+interface ApiResponse {
+    comments: Comment[];
+    totalComments: number;
+    [key: string]: any;
+}
+
+const MAX_COMMENT_LENGTH = 500;
+const PAGE_SIZE = 10;
+
 const CommentBox: React.FC<CommentBoxProps> = ({ nid = '' }) => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [comment, setComment] = useState('');
@@ -46,18 +58,25 @@ const CommentBox: React.FC<CommentBoxProps> = ({ nid = '' }) => {
     const [token, setToken] = useState('');
     const [comments, setComments] = useState<Comment[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
-    const pageSize = 10;
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [totalComments, setTotalComments] = useState(0);
+
+    const getCookie = (name: string): string | null => {
+        const cookies = document.cookie.split(';');
+        const cookie = cookies.find(c => c.trim().startsWith(`${name}=`));
+        return cookie ? decodeURIComponent(cookie.split('=')[1]) : null;
+    };
+
     useEffect(() => {
-        const cookies = document.cookie;
-        const qatCookie = cookies.split(';').find((cookie) => cookie.trim().startsWith('qat='));
+        const qatCookie = getCookie('qat');
         if (qatCookie) {
-            const token = decodeURIComponent(qatCookie.split('=')[1]);
-            setToken(token);
             try {
-                const decoded = jwtDecode<DecodedToken>(token);
+                const decoded = jwtDecode<DecodedToken>(qatCookie);
                 if (decoded.user) {
                     const extractedUid = decoded.user.qlnext_user_id || decoded.user.uid;
                     const extractedName = decoded.user.name;
+                    setToken(qatCookie);
                     setUid(extractedUid || '');
                     setUserName(extractedName || '');
                     setIsLoggedIn(true);
@@ -69,9 +88,13 @@ const CommentBox: React.FC<CommentBoxProps> = ({ nid = '' }) => {
     }, []);
 
     const fetchComments = async () => {
+        if (!nid || !token) return;
+        
+        setIsLoading(true);
+        setError('');
         try {
-            const res = await axios.get(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL}news/commentsbyArticleid/${nid}?page=${currentPage}&perPage=${pageSize}`,
+            const res = await axios.get<ApiResponse>(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}news/commentsbyArticleid/${nid}?page=${currentPage}&perPage=${PAGE_SIZE}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -80,17 +103,17 @@ const CommentBox: React.FC<CommentBoxProps> = ({ nid = '' }) => {
                 }
             );
 
-            const commentList = res.data.comments || [];
-            const total = res.data.totalComments || 0;
-
-            setComments(commentList);
-            setCurrentPage(Math.ceil(total / pageSize));
+            setComments(res.data.comments || []);
+            setTotalComments(res.data.totalComments || 0);
         } catch (err) {
-            console.error(' Failed to fetch comments:', err);
+            console.error('Failed to fetch comments:', err);
+            setError('Failed to load comments. Please try again later.');
             setComments([]);
-            setCurrentPage(1);
+        } finally {
+            setIsLoading(false);
         }
     };
+
     const handleLike = async (commentId: string) => {
         try {
             await axios.post(
@@ -103,24 +126,19 @@ const CommentBox: React.FC<CommentBoxProps> = ({ nid = '' }) => {
                     },
                 }
             );
-
-            // Refresh comment list after like
             fetchComments();
         } catch (error) {
-            console.error(' Failed to like comment:', error);
+            console.error('Failed to like comment:', error);
+            setError('Failed to like comment. Please try again.');
         }
     };
 
-
     useEffect(() => {
-        if (nid && token) {
-            fetchComments();
-        }
+        fetchComments();
     }, [nid, token, currentPage]);
 
-
     const handlePost = async () => {
-        if (!comment.trim()) return;
+        if (!comment.trim() || comment.length > MAX_COMMENT_LENGTH) return;
 
         const guid = crypto.randomUUID();
         const payload = {
@@ -145,19 +163,20 @@ const CommentBox: React.FC<CommentBoxProps> = ({ nid = '' }) => {
             });
 
             setComment('');
-            fetchComments(); // refresh comments
+            fetchComments();
         } catch (error) {
-            console.error(' Failed to post comment:', error);
+            console.error('Failed to post comment:', error);
+            setError('Failed to post comment. Please try again.');
         }
     };
 
-    const paginatedComments = Array.isArray(comments)
-        ? comments.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-        : [];
+    const paginatedComments = useMemo(() => comments, [comments]);
+    const totalPages = Math.ceil(totalComments / PAGE_SIZE);
+    const showPostButton = comment.trim().length > 0 && comment.length <= MAX_COMMENT_LENGTH;
 
-
-    const showPostButton = comment.trim().length > 0;
-    const totalPages = Math.ceil(comments.length / pageSize);
+    const handleCloseError = () => {
+        setError('');
+    };
 
     return (
         <Box py={4}>
@@ -179,10 +198,16 @@ const CommentBox: React.FC<CommentBoxProps> = ({ nid = '' }) => {
                             <TextField
                                 value={comment}
                                 onChange={(e) => setComment(e.target.value)}
-                                placeholder="Add a comment"
+                                placeholder={`Add a comment (max ${MAX_COMMENT_LENGTH} characters)`}
                                 fullWidth
                                 multiline
                                 minRows={1}
+                                error={comment.length > MAX_COMMENT_LENGTH}
+                                helperText={
+                                    comment.length > MAX_COMMENT_LENGTH 
+                                        ? `Comment must be less than ${MAX_COMMENT_LENGTH} characters` 
+                                        : ''
+                                }
                                 sx={{
                                     borderRadius: '8px',
                                     '& .MuiOutlinedInput-root': {
@@ -219,59 +244,75 @@ const CommentBox: React.FC<CommentBoxProps> = ({ nid = '' }) => {
                         </Stack>
 
                         <Box mt={4}>
-                            {paginatedComments.map((c) => (
-                                <Box
-                                    key={c.commentId}
-                                    mt={2}
-                                    p={2}
-                                    border="1px solid #EAECF0"
-                                    borderRadius="12px"
-                                    bgcolor="#fff"
-                                >
-                                    <Stack direction="row" spacing={1} alignItems="center" mb={1}>
-                                        <Avatar src={c.userImageUrl} sx={{ width: 32, height: 32 }} />
-                                        <Typography fontWeight={600}>{c.userName}</Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            • {new Date(c.dateCreated).toLocaleString()}
-                                        </Typography>
-                                    </Stack>
-                                    <Typography mb={1}>{c.subject}</Typography>
-                                    <Stack direction="row" spacing={2}>
-                                        <Stack direction="row" alignItems="center" spacing={0.5}>
-                                            <IconButton size="small" onClick={() => handleLike(c.commentId)}>
-                                                <ThumbUpAltOutlinedIcon fontSize="small" />
-                                            </IconButton>
-                                            <Typography variant="body2">{c.likeCount}</Typography>
-                                        </Stack>
-                                    </Stack>
+                            {isLoading ? (
+                                <Box display="flex" justifyContent="center" py={4}>
+                                    <CircularProgress />
                                 </Box>
-                            ))}
+                            ) : paginatedComments.length === 0 ? (
+                                <Typography variant="body1" color="text.secondary" textAlign="center" py={4}>
+                                    No comments yet. Be the first to comment!
+                                </Typography>
+                            ) : (
+                                paginatedComments.map((c) => (
+                                    <Box
+                                        key={c.commentId}
+                                        mt={2}
+                                        p={2}
+                                        border="1px solid #EAECF0"
+                                        borderRadius="12px"
+                                        bgcolor="#fff"
+                                    >
+                                        <Stack direction="row" spacing={1} alignItems="center" mb={1}>
+                                            <Avatar src={c.userImageUrl} sx={{ width: 32, height: 32 }} />
+                                            <Typography fontWeight={600}>{c.userName}</Typography>
+                                            <Typography variant="body2" color="text.secondary">
+                                                • {new Date(c.dateCreated).toLocaleString()}
+                                            </Typography>
+                                        </Stack>
+                                        <Typography mb={1}>{c.subject}</Typography>
+                                        <Stack direction="row" spacing={2}>
+                                            <Stack direction="row" alignItems="center" spacing={0.5}>
+                                                <IconButton 
+                                                    size="small" 
+                                                    onClick={() => handleLike(c.commentId)}
+                                                    aria-label="Like comment"
+                                                >
+                                                    <ThumbUpAltOutlinedIcon fontSize="small" />
+                                                </IconButton>
+                                                <Typography variant="body2">{c.likeCount}</Typography>
+                                            </Stack>
+                                        </Stack>
+                                    </Box>
+                                ))
+                            )}
                         </Box>
 
-                        {/* Pagination */}
-                        <Box display="flex" justifyContent="center" alignItems="center" mt={4} gap={1}>
-                            <Button
-                                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                                disabled={currentPage === 1}
-                            >
-                                Previous
-                            </Button>
-                            {[...Array(totalPages)].map((_, i) => (
+                        {totalPages > 1 && (
+                            <Box display="flex" justifyContent="center" alignItems="center" mt={4} gap={1}>
                                 <Button
-                                    key={i}
-                                    variant={currentPage === i + 1 ? 'contained' : 'text'}
-                                    onClick={() => setCurrentPage(i + 1)}
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1 || isLoading}
                                 >
-                                    {i + 1}
+                                    Previous
                                 </Button>
-                            ))}
-                            <Button
-                                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                                disabled={currentPage === totalPages}
-                            >
-                                Next
-                            </Button>
-                        </Box>
+                                {[...Array(totalPages)].map((_, i) => (
+                                    <Button
+                                        key={i}
+                                        variant={currentPage === i + 1 ? 'contained' : 'text'}
+                                        onClick={() => setCurrentPage(i + 1)}
+                                        disabled={isLoading}
+                                    >
+                                        {i + 1}
+                                    </Button>
+                                ))}
+                                <Button
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages || isLoading}
+                                >
+                                    Next
+                                </Button>
+                            </Box>
+                        )}
                     </>
                 ) : (
                     <Box display="flex" flexDirection="column" alignItems="center" mt={2}>
@@ -280,6 +321,17 @@ const CommentBox: React.FC<CommentBoxProps> = ({ nid = '' }) => {
                         </Typography>
                     </Box>
                 )}
+
+                <Snackbar
+                    open={!!error}
+                    autoHideDuration={6000}
+                    onClose={handleCloseError}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                >
+                    <Alert onClose={handleCloseError} severity="error" sx={{ width: '100%' }}>
+                        {error}
+                    </Alert>
+                </Snackbar>
             </Box>
         </Box>
     );
