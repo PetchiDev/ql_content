@@ -81,7 +81,6 @@ export const getallcategories = async (
   try {
     const response = await api.get('event/getallcategories');
     const data = response.data || {};
-    debugger
     setData(data);
     return data;
   } catch (err) {

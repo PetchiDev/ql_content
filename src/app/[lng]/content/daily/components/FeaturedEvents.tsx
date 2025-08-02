@@ -51,7 +51,7 @@ const FeaturedEvents: React.FC<FeaturedEventsProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const skeletonCount = isMobile ? 2 : 6;
-  const centerItems = featuredEvents.length <= 3;
+  const centerItems = featuredEvents.length <= 5;
 
   return (
     <Box mt={6}>

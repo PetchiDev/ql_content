@@ -126,13 +126,14 @@ const EventFilterBar: React.FC<Props> = ({
     getAllCategoriesLocations(setLocationData);
     getallcategories((data) => {
       setCategoriesData(
-        data.categories?.map((cat: { id: string | number; name: string }) => ({
+        data?.map((cat: { id: string | number; categoryName: string }) => ({
           id: cat.id,
-          categoryName: cat.name,
+          categoryName: cat.categoryName,
         })) || []
       );
     });
   }, []);
+
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
