@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Box, Grid, Typography, Skeleton } from "@mui/material";
 import MoreArticles from "@/components/content/daily/MoreArticles";
+import EmptyState from "@/components/empty-box";
 
 interface ContentItem {
   id: string;
@@ -67,7 +68,7 @@ const NewsHighlights: React.FC<NewsHighlightsProps> = ({ dailyData, loading }) =
             ) : (
               <>
                 {/* Top Story */}
-                {topStory && (
+                {topStory ? (
                   <Grid item xs={12} md={6} display="flex">
                     <a
                       href={`/content/daily/${topStory.slug ?? topStory.id}`}
@@ -119,10 +120,15 @@ const NewsHighlights: React.FC<NewsHighlightsProps> = ({ dailyData, loading }) =
 
                     </a>
                   </Grid>
+                ) : (
+                  <Grid item xs={12} md={6}>
+                    <EmptyState title="No top story available" subtitle="Please check back later." />
+                  </Grid>
                 )}
 
+
                 {/* Highlighted Event */}
-                {highlightedEvent && (
+                {highlightedEvent ? (
                   <Grid item xs={12} md={6} display="flex">
                     <a
                       href={`/content/events/${highlightedEvent.slug ?? highlightedEvent.id}`}
@@ -170,6 +176,7 @@ const NewsHighlights: React.FC<NewsHighlightsProps> = ({ dailyData, loading }) =
                             {highlightedEvent.event_start} to {highlightedEvent.event_end}
                           </Box>
                         </Box>
+
                         <Box>
                           <Typography color="orange" fontWeight="bold">
                             {dailyData?.qln_contents_daily_event?.queue_label}
@@ -203,7 +210,12 @@ const NewsHighlights: React.FC<NewsHighlightsProps> = ({ dailyData, loading }) =
 
                     </a>
                   </Grid>
+                ) : (
+                  <Grid item xs={12} md={6}>
+                    <EmptyState title="No highlighted event available" subtitle="Please check back later." />
+                  </Grid>
                 )}
+
               </>
             )}
           </Grid>

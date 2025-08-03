@@ -1,95 +1,117 @@
+// DailyTopic.tsx
 'use client';
 
 import React from 'react';
-import { Box, Typography, useTheme, useMediaQuery } from '@mui/material';
-import SkeletonCard from './SkeletonCard';
+import { Box, Typography, Skeleton } from '@mui/material';
+import { styled } from '@mui/material/styles';
 import DailyTopicCard from './DailyTopicCard';
-import { DailyTopicItem } from './types';
+
+interface ContentEvent {
+  id: string;
+  title: string;
+  category: string;
+  image_url: string;
+  slug: string;
+  node_type: string;
+}
 
 interface DailyTopicProps {
   title: string;
-  items: DailyTopicItem[];
-  showViewAll?: boolean;
+  items: ContentEvent[];
   loading?: boolean;
 }
 
-const skeletonArray = new Array(3).fill(null);
+const CategorySection = styled(Box)({
+  padding: '1rem',
+  marginBottom: '1rem',
+  fontFamily: "'Public Sans', sans-serif",
+});
 
-const DailyTopic: React.FC<DailyTopicProps> = ({
-  title,
-  items,
-  showViewAll = true,
-  loading = false,
-}) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+const SectionHeader = styled(Box)({
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'flex-start',
+  width: '100%',
+  padding: '0px 5px',
+});
+
+const SectionHeading = styled(Typography)({
+  fontSize: '25px',
+  fontWeight: 600,
+  color: 'var(--color-primary)',
+  display: 'flex',
+  alignItems: 'center',
+});
+
+const AccentBar = styled(Box)({
+  width: '4px',
+  height: '24px',
+  backgroundColor: 'var(--color-primary)',
+  marginRight: '8px',
+});
+
+const CardList = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  overflowX: 'auto',
+  gap: '1rem',
+  padding: '10px 0',
+  scrollSnapType: 'x mandatory',
+  [theme.breakpoints.up('md')]: {
+    overflowX: 'visible',
+  },
+}));
+
+const DailyTopic: React.FC<DailyTopicProps> = ({ title, items, loading = false }) => {
+  const displayItems = items.slice(0, 3);
+
+  const getDetailUrl = (item: ContentEvent) => {
+    if (item.node_type?.toLowerCase().includes('post') && item.slug) {
+      return `/content/news/${item.slug}`;
+    } else if (item.node_type?.toLowerCase().includes('event') && item.slug) {
+      return `/content/events/${item.slug}`;
+    }
+    return '#';
+  };
+
+  if (loading) {
+    return (
+      <CategorySection>
+        <SectionHeader>
+          <SectionHeading variant="h3">
+            <AccentBar />
+            <Skeleton variant="text" width={150} height={30} />
+          </SectionHeading>
+        </SectionHeader>
+        <CardList>
+          {[...Array(3)].map((_, index) => (
+            <Skeleton key={index} variant="rectangular" width={214} height={130} />
+          ))}
+        </CardList>
+      </CategorySection>
+    );
+  }
 
   return (
-    <Box my={4} width="100%" display="flex" flexDirection="column" alignItems="center">
-      <Box width="100%" maxWidth="1170px" px={2}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography
-            variant="h6"
-            fontWeight={700}
-            color="primary.main"
-            sx={{ fontSize: '18px', lineHeight: '24px' }}
-          >
-            | {title}
-          </Typography>
-          {showViewAll && (
-            <Typography
-              variant="body2"
-              color="warning.main"
-              sx={{ cursor: 'pointer', fontWeight: 500 }}
-              onClick={() => window.open(`/content/news`)}
-            >
-              View all &gt;
-            </Typography>
-          )}
-        </Box>
+    <CategorySection>
+      <SectionHeader>
+        <SectionHeading variant="h3">
+          <AccentBar />
+          {title}
+        </SectionHeading>
+      </SectionHeader>
 
-        <Box
-          sx={{
-            display: 'flex',
-            overflowX: isMobile ? 'auto' : 'visible',
-            gap: 2,
-            scrollSnapType: isMobile ? 'x mandatory' : 'none',
-            scrollbarWidth: 'none',
-            '&::-webkit-scrollbar': { display: 'none' },
-            flexWrap: isMobile ? 'nowrap' : 'wrap',
-          }}
-        >
-          {loading
-            ? skeletonArray.map((_, index) => (
-                <Box
-                  key={index}
-                  sx={{
-                    flex: '0 0 auto',
-                    width: isMobile ? '80vw' : isTablet ? '31%' : '32%',
-                    minWidth: isMobile ? '80vw' : undefined,
-                    scrollSnapAlign: isMobile ? 'start' : undefined,
-                  }}
-                >
-                  <SkeletonCard />
-                </Box>
-              ))
-            : items.slice(0, 3).map((item) => (
-                <Box
-                  key={item.id}
-                  sx={{
-                    flex: '0 0 auto',
-                    width: isMobile ? '80vw' : isTablet ? '31%' : '32%',
-                    minWidth: isMobile ? '80vw' : undefined,
-                    scrollSnapAlign: isMobile ? 'start' : undefined,
-                  }}
-                >
-                  <DailyTopicCard item={item} />
-                </Box>
-              ))}
-        </Box>
-      </Box>
-    </Box>
+      <CardList>
+        {displayItems.map((item, index) => (
+          <a
+            key={item.id}
+            href={getDetailUrl(item)}
+            style={{ textDecoration: 'none', display: 'flex' }}
+          >
+            <DailyTopicCard item={item} isLast={index === displayItems.length - 1} />
+          </a>
+        ))}
+      </CardList>
+    </CategorySection>
   );
 };
 
