@@ -2,9 +2,9 @@ import type { NextConfig } from "next";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "standalone",
+  output: "standalone", //standalone
   images: {
-    domains: ['www.youtube.com'], // ⚠️ Not needed for YouTube videos, only for actual image hosting domains
+    domains: ['www.youtube.com'], 
     remotePatterns: [
       {
         protocol: 'https',
