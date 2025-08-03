@@ -100,6 +100,7 @@ export default function PostPage() {
                 author={post.user_name}
                 publishDate={post.published_at}
                 content={post.content}
+                slug={slug}
               />
             </Grid>
 

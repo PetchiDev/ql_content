@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "standalone", //standalone
+  output: "standalone",
   images: {
     domains: ['www.youtube.com'], 
     remotePatterns: [

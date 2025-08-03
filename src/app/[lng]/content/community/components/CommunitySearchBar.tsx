@@ -1,32 +1,20 @@
 "use client";
-
 import React, { useEffect, useState } from "react";
-import {
-  Box,
-  TextField,
-  MenuItem,
-  Button,
-  Stack,
-  InputLabel,
-  FormControl,
-  Select,
-  CircularProgress,
-  InputAdornment,
-} from "@mui/material";
+import { Box, TextField, MenuItem, Button, Stack, InputLabel, FormControl, Select, CircularProgress, InputAdornment } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { getAllForumCategories } from "@/utils/community/community";
+
 interface ForumCategory {
   id: string;
   name: string;
 }
-
 interface Props {
   onSearch: (searchText: string, categoryId: string) => void;
 }
 
 const CommunitySearchBar: React.FC<Props> = ({ onSearch }) => {
   const [searchText, setSearchText] = useState("");
-  const [category, setCategory] = useState(""); // This is category name
+  const [category, setCategory] = useState(""); // Storing category name
   const [categories, setCategories] = useState<ForumCategory[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
 
@@ -43,9 +31,7 @@ const CommunitySearchBar: React.FC<Props> = ({ onSearch }) => {
       }
     };
     fetchCategories();
-    return () => {
-      canceled = true;
-    };
+    return () => { canceled = true; };
   }, []);
 
   const handleSearch = () => {
@@ -53,28 +39,30 @@ const CommunitySearchBar: React.FC<Props> = ({ onSearch }) => {
     const selectedCategoryId = selected?.id ?? "";
     onSearch(searchText, selectedCategoryId);
   };
+
   return (
     <Box
       sx={{
-        backgroundColor: "#E5E5E5", // Grey background
-        px: 2,
-        py: 2,
-        borderRadius: "8px",
+        backgroundColor: "#E5E5E5",
+        px: { xs: 1, sm: 2 },
+        py: { xs: 1.5, sm: 2 },
+        borderRadius: "12px",
         width: "100%",
-        maxWidth: "1170px", // max width
-        mx: "auto", // Center it horizontally
+        maxWidth: 1170,
+        mx: "auto"
       }}
     >
       <Stack
         direction={{ xs: "column", md: "row" }}
-        spacing={2}
+        spacing={0}
         alignItems="stretch"
-        justifyContent="center"
         sx={{
           backgroundColor: "#fff",
           borderRadius: "8px",
           overflow: "hidden",
+          minHeight: { xs: 0, md: 54 },
           boxShadow: 1,
+          width: "100%",
         }}
       >
         {/* Search Input */}
@@ -92,11 +80,18 @@ const CommunitySearchBar: React.FC<Props> = ({ onSearch }) => {
             ),
             sx: {
               borderRadius: 0,
-              px: 1,
-              py: 0.5,
-              height: "100%",
-              borderRight: "1px solid #D9DCE1",
-            },
+              backgroundColor: "#fff",
+              px: 1.5,
+              minHeight: 54,
+              borderRight: { xs: "none", md: "1px solid #D9DCE1" },
+              '& fieldset': { border: 'none' },
+            }
+          }}
+          sx={{
+            borderRadius: 0,
+            flex: 2,
+            minWidth: 0,
+            ".MuiOutlinedInput-root": { borderRadius: 0 }
           }}
         />
 
@@ -105,30 +100,28 @@ const CommunitySearchBar: React.FC<Props> = ({ onSearch }) => {
           fullWidth
           variant="outlined"
           sx={{
-            minWidth: 180,
+            minWidth: { xs: '100%', md: 170 },
             backgroundColor: "#fff",
-            px: 1,
-            borderRight: "1px solid #D9DCE1",
-            display: "flex",
-            justifyContent: "center",
-            "& .MuiOutlinedInput-root": {
+            px: { xs: 0, md: 1.5 },
+            borderRight: { xs: "none", md: "1px solid #D9DCE1" },
+            flex: 1,
+            justifyContent: 'center',
+            '.MuiOutlinedInput-root': {
               borderRadius: 0,
-              height: "100%",
+              minHeight: 54,
+              backgroundColor: "#fff",
             },
-            "& .MuiOutlinedInput-notchedOutline": {
-              border: "none",
-            },
+            '.MuiOutlinedInput-notchedOutline': { border: 'none' },
+            '.MuiSelect-select': { px: 1 },
+            '.MuiInputLabel-root': { ml: 1, fontSize: "12px", color: "#9CA3AF" }
           }}
         >
-          <InputLabel
-            shrink
-            sx={{
-              ml: 1,
-              fontSize: "12px",
-              color: "#9CA3AF",
-              mt: "-4px",
-            }}
-          >
+          <InputLabel shrink sx={{
+            ml: 1,
+            fontSize: "12px",
+            color: "#9CA3AF",
+            zIndex: 2,
+          }}>
             Category
           </InputLabel>
           <Select
@@ -137,18 +130,13 @@ const CommunitySearchBar: React.FC<Props> = ({ onSearch }) => {
             onChange={(e) => setCategory(e.target.value)}
             renderValue={(selected) =>
               selected ? (
-                <span style={{ color: "#111827", fontWeight: 500 }}>
-                  {selected}
-                </span>
+                <span style={{ color: "#111827", fontWeight: 500 }}>{selected}</span>
               ) : (
                 <span style={{ color: "#9CA3AF" }}>Choose</span>
               )
             }
-            MenuProps={{
-              PaperProps: {
-                style: { maxHeight: 250 },
-              },
-            }}
+            inputProps={{ 'aria-label': 'Category' }}
+            MenuProps={{ PaperProps: { style: { maxHeight: 260 } } }}
           >
             {loadingCategories ? (
               <MenuItem disabled>
@@ -167,25 +155,25 @@ const CommunitySearchBar: React.FC<Props> = ({ onSearch }) => {
         {/* Show Results Button */}
         <Button
           onClick={handleSearch}
+          fullWidth
           sx={{
             backgroundColor: "#FF7A1A",
             color: "#fff",
             fontWeight: 600,
-            px: 4,
             borderRadius: 0,
+            minHeight: 54,
+            px: { xs: 0, md: 4 },
+            width: { xs: "100%", md: "auto" },
             whiteSpace: "nowrap",
-            "&:hover": {
-              backgroundColor: "#e96b0d",
-            },
+            "&:hover": { backgroundColor: "#e96b0d" },
+            fontSize: 16,
           }}
         >
           Show Results
         </Button>
       </Stack>
     </Box>
-
-    
   );
-}
+};
 
 export default CommunitySearchBar;
