@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -9,10 +9,10 @@ import {
   Stack,
   Avatar,
   IconButton,
-} from '@mui/material';
-import ThumbUpAltOutlinedIcon from '@mui/icons-material/ThumbUpAltOutlined';
-import { jwtDecode } from 'jwt-decode';
-import axios from 'axios';
+} from "@mui/material";
+import ThumbUpAltOutlinedIcon from "@mui/icons-material/ThumbUpAltOutlined";
+import { jwtDecode } from "jwt-decode";
+import axios from "axios";
 
 interface CommentBoxProps {
   nid: string;
@@ -42,31 +42,33 @@ interface Comment {
 
 const CommentBox: React.FC<CommentBoxProps> = ({ nid }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [comment, setComment] = useState('');
-  const [uid, setUid] = useState('');
-  const [userName, setUserName] = useState('');
-  const [token, setToken] = useState('');
+  const [comment, setComment] = useState("");
+  const [uid, setUid] = useState("");
+  const [userName, setUserName] = useState("");
+  const [token, setToken] = useState("");
   const [comments, setComments] = useState<Comment[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 3;
 
   useEffect(() => {
     const cookies = document.cookie;
-    const qatCookie = cookies.split(';').find((cookie) => cookie.trim().startsWith('qat='));
+    const qatCookie = cookies
+      .split(";")
+      .find((cookie) => cookie.trim().startsWith("qat="));
     if (qatCookie) {
-      const token = decodeURIComponent(qatCookie.split('=')[1]);
+      const token = decodeURIComponent(qatCookie.split("=")[1]);
       setToken(token);
       try {
         const decoded = jwtDecode<DecodedToken>(token);
         if (decoded.user) {
           const extractedUid = decoded.user.qlnext_user_id || decoded.user.uid;
           const extractedName = decoded.user.name;
-          setUid(extractedUid || '');
-          setUserName(extractedName || '');
+          setUid(extractedUid || "");
+          setUserName(extractedName || "");
           setIsLoggedIn(true);
         }
       } catch (err) {
-        console.error('Invalid JWT token', err);
+        console.error("Invalid JWT token", err);
       }
     }
   }, []);
@@ -78,7 +80,7 @@ const CommentBox: React.FC<CommentBoxProps> = ({ nid }) => {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            Accept: 'application/json',
+            Accept: "application/json",
           },
         }
       );
@@ -86,12 +88,10 @@ const CommentBox: React.FC<CommentBoxProps> = ({ nid }) => {
       const commentList = res.data?.comments || [];
       setComments(commentList);
     } catch (err) {
-      console.error(' Failed to fetch comments:', err);
+      console.error(" Failed to fetch comments:", err);
       setComments([]);
     }
   };
-
-
 
   useEffect(() => {
     if (nid && token) {
@@ -123,18 +123,40 @@ const CommentBox: React.FC<CommentBoxProps> = ({ nid }) => {
         }
       );
 
-      setComment('');
+      setComment("");
       fetchComments(); // refresh after post
     } catch (error) {
-      console.error(' Failed to post comment:', error);
+      console.error(" Failed to post comment:", error);
     }
   };
 
+  const handleLikeComment = async (commentId: string) => {
+    try {
+      const payload = {
+        commentId,
+        communityPostId: nid,
+      };
+
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}community/likeCommentByUserId`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      fetchComments(); // refresh after like
+    } catch (err) {
+      console.error("Failed to like comment:", err);
+    }
+  };
 
   const paginatedComments = Array.isArray(comments)
     ? comments.slice((currentPage - 1) * pageSize, currentPage * pageSize)
     : [];
-
 
   const showPostButton = comment.trim().length > 0;
   const totalPages = Math.ceil(comments.length / pageSize);
@@ -147,10 +169,10 @@ const CommentBox: React.FC<CommentBoxProps> = ({ nid }) => {
 
       <Box
         sx={{
-          backgroundColor: '#fff',
-          borderRadius: '12px',
-          border: '1px solid #EAECF0',
-          padding: '24px',
+          backgroundColor: "#fff",
+          borderRadius: "12px",
+          border: "1px solid #EAECF0",
+          padding: "24px",
         }}
       >
         {isLoggedIn ? (
@@ -164,13 +186,13 @@ const CommentBox: React.FC<CommentBoxProps> = ({ nid }) => {
                 multiline
                 minRows={1}
                 sx={{
-                  borderRadius: '8px',
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '12px',
-                    paddingRight: showPostButton ? 0 : '14px',
-                    '& fieldset': { borderColor: '#F97316' },
-                    '&:hover fieldset': { borderColor: '#F97316' },
-                    '&.Mui-focused fieldset': { borderColor: '#F97316' },
+                  borderRadius: "8px",
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "12px",
+                    paddingRight: showPostButton ? 0 : "14px",
+                    "& fieldset": { borderColor: "#F97316" },
+                    "&:hover fieldset": { borderColor: "#F97316" },
+                    "&.Mui-focused fieldset": { borderColor: "#F97316" },
                   },
                 }}
               />
@@ -182,14 +204,14 @@ const CommentBox: React.FC<CommentBoxProps> = ({ nid }) => {
                     mt: 0.5,
                     height: 40,
                     width: 72,
-                    borderRadius: '8px',
-                    backgroundColor: '#F97316',
-                    textTransform: 'none',
+                    borderRadius: "8px",
+                    backgroundColor: "#F97316",
+                    textTransform: "none",
                     fontWeight: 500,
-                    boxShadow: 'none',
-                    '&:hover': {
-                      backgroundColor: '#ea6a0c',
-                      boxShadow: 'none',
+                    boxShadow: "none",
+                    "&:hover": {
+                      backgroundColor: "#ea6a0c",
+                      boxShadow: "none",
                     },
                   }}
                 >
@@ -209,7 +231,10 @@ const CommentBox: React.FC<CommentBoxProps> = ({ nid }) => {
                   bgcolor="#fff"
                 >
                   <Stack direction="row" spacing={1} alignItems="center" mb={1}>
-                    <Avatar src={c.userImageUrl} sx={{ width: 32, height: 32 }} />
+                    <Avatar
+                      src={c.userImageUrl}
+                      sx={{ width: 32, height: 32 }}
+                    />
                     <Typography fontWeight={600}>{c.userName}</Typography>
                     <Typography variant="body2" color="text.secondary">
                       • {new Date(c.commentedAt).toLocaleString()}
@@ -218,13 +243,17 @@ const CommentBox: React.FC<CommentBoxProps> = ({ nid }) => {
                   <Typography mb={1}>{c.content}</Typography>
                   <Stack direction="row" spacing={2}>
                     <Stack direction="row" alignItems="center" spacing={0.5}>
-                      <ThumbUpAltOutlinedIcon fontSize="small" />
+                      <ThumbUpAltOutlinedIcon
+                        fontSize="small"
+                        sx={{ cursor: "pointer" }}
+                        onClick={() => handleLikeComment(c.commentId)}
+                      />
                       <Typography variant="body2">{c.likeCount}</Typography>
                     </Stack>
                     <Stack direction="row" alignItems="center" spacing={0.5}>
                       <ThumbUpAltOutlinedIcon
                         fontSize="small"
-                        sx={{ transform: 'scaleX(-1)' }}
+                        sx={{ transform: "scaleX(-1)" }}
                       />
                       <Typography variant="body2">{c.dislikeCount}</Typography>
                     </Stack>
@@ -234,7 +263,13 @@ const CommentBox: React.FC<CommentBoxProps> = ({ nid }) => {
             </Box>
 
             {/* Pagination */}
-            <Box display="flex" justifyContent="center" alignItems="center" mt={4} gap={1}>
+            <Box
+              display="flex"
+              justifyContent="center"
+              alignItems="center"
+              mt={4}
+              gap={1}
+            >
               <Button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
@@ -244,14 +279,16 @@ const CommentBox: React.FC<CommentBoxProps> = ({ nid }) => {
               {[...Array(totalPages)].map((_, i) => (
                 <Button
                   key={i}
-                  variant={currentPage === i + 1 ? 'contained' : 'text'}
+                  variant={currentPage === i + 1 ? "contained" : "text"}
                   onClick={() => setCurrentPage(i + 1)}
                 >
                   {i + 1}
                 </Button>
               ))}
               <Button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
                 disabled={currentPage === totalPages}
               >
                 Next
